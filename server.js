@@ -12,7 +12,7 @@ app.use(express.json());            // 解析JSON请求体
 app.use(express.static('public'));  // 托管前端静态文件
 
 // ================= 配置区域 =================
-const BAIDU_API_KEY = 'bce-v3/ALTAK-d7WjDUtLq5lfJl3F9JKiZ/a25b0cf11ccf19daecc01a4dfe7716f9939aa4b0';
+const BAIDU_API_KEY = process.env.BAIDU_TOKEN || 'YOUR_BEARER_TOKEN_HERE';
 // 百度千帆API端点（使用deepseek-v3.1-250821模型，可按需修改）
 const QIANFAN_URL = 'https://qianfan.baidubce.com/v2/chat/completions';
 const MODEL_NAME = 'deepseek-v3.1-250821';  // 或其他模型如 ernie-4.0-8k-latest
