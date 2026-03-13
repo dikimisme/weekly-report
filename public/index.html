@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>📅 AI周报生成器</title>
+    <!-- Font Awesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+        /* 标题区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .header h1 i {
+            color: #3b82f6;
+        }
+        .subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+        /* 卡片网格 - 周一至周日 */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+        .day-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px 16px 16px 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+        .day-card:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: #dbeafe;
+        }
+        .day-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: block;
+            color: #1e293b;
+            padding-left: 4px;
+        }
+        .day-label i {
+            color: #3b82f6;
+            margin-right: 6px;
+            font-size: 0.9rem;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            background-color: #fafbfc;
+            transition: border 0.15s, box-shadow 0.15s;
+            line-height: 1.5;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background-color: white;
+        }
+        textarea[readonly] {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin: 30px 0 20px;
+        }
+        .btn {
+            border: none;
+            border-radius: 40px;
+            padding: 12px 28px;
+            font-size: 1rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            min-width: 140px;
+        }
+        .btn i {
+            font-size: 1.1rem;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -5px #3b82f6;
+        }
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #334155;
+            border-color: #e2e8f0;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #e2e8f0;
+        }
+        .btn-light {
+            background-color: white;
+            color: #475569;
+            border-color: #e2e8f0;
+        }
+        .btn-light:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        /* 预览区域 */
+        .preview-section {
+            margin-top: 20px;
+        }
+        .preview-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .preview-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 16px;
+            border-radius: 20px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background-color: #1e293b;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+        /* 适配手机 */
+        @media (max-width: 640px) {
+            .header h1 { font-size: 1.8rem; }
+            .days-grid { grid-template-columns: 1fr; }
+            .btn { min-width: 120px; padding: 10px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题区 -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-calendar-alt"></i> AI周报生成器
+            </h1>
+            <div class="subtitle">输入每天记录，一键生成专业周报</div>
+        </div>
+
+        <!-- 7个卡片输入区 -->
+        <div class="days-grid" id="daysGrid">
+            <!-- 周一 ~ 周日 通过JS动态生成，方便维护 -->
+        </div>
+
+        <!-- 按钮组 -->
+        <div class="button-group">
+            <button class="btn btn-primary" id="generateBtn">
+                <i class="fas fa-magic"></i> 一键生成周报
+            </button>
+            <button class="btn btn-secondary" id="copyBtn">
+                <i class="far fa-copy"></i> 复制周报
+            </button>
+            <button class="btn btn-light" id="clearBtn">
+                <i class="fas fa-eraser"></i> 清空所有
+            </button>
+        </div>
+
+        <!-- 预览区 -->
+        <div class="preview-section">
+            <div class="preview-label">
+                <i class="fas fa-eye" style="color:#3b82f6;"></i> 预览区
+            </div>
+            <textarea class="preview-textarea" id="previewArea" readonly placeholder="生成的周报将显示在这里……"></textarea>
+        </div>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div class="toast" id="toast">复制成功！</div>
+
+    <script>
+        (function() {
+            // ---------- 配置数据 ----------
+            // 星期名称与示例内容（周一至周日）
+            const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            // 示例数据（为了视频效果，自动填充）
+            const exampleContents = [
+                "开会讨论项目进度",           // 周一
+                "摸鱼",                       // 周二 (示例保持幽默，也可改为“修复线上bug”)
+                "写周报生成器代码",            // 周三
+                "代码审查 & 修复PR问题",       // 周四
+                "撰写技术文档",                // 周五
+                "团队建设活动",                // 周六
+                "规划下周工作"                 // 周日
+            ];
+
+            // ---------- DOM 元素 ----------
+            const daysGrid = document.getElementById('daysGrid');
+            const generateBtn = document.getElementById('generateBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const previewArea = document.getElementById('previewArea');
+            const toast = document.getElementById('toast');
+
+            // 存储7个textarea的引用
+            let textareaElements = [];
+
+            // ---------- 渲染卡片 ----------
+            function renderCards() {
+                daysGrid.innerHTML = '';  // 清空
+                textareaElements = [];
+
+                for (let i = 0; i < weekdays.length; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'day-card';
+
+                    const label = document.createElement('span');
+                    label.className = 'day-label';
+                    label.innerHTML = `<i class="fas fa-chevron-right"></i> ${weekdays[i]}`;
+
+                    const textarea = document.createElement('textarea');
+                    textarea.placeholder = '今天做了什么？';
+                    textarea.id = `day-${i}`;
+
+                    // 填充示例数据
+                    textarea.value = exampleContents[i] || '';
+
+                    card.appendChild(label);
+                    card.appendChild(textarea);
+                    daysGrid.appendChild(card);
+
+                    textareaElements.push(textarea);
+                }
+            }
+            renderCards();
+
+            // ---------- 工具函数: 显示toast ----------
+            function showToast(message = '复制成功！', duration = 1500) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, duration);
+            }
+
+            // ---------- 清空所有 ----------
+            function clearAll() {
+                textareaElements.forEach(textarea => textarea.value = '');
+                previewArea.value = '';
+            }
+
+            // ---------- 收集所有输入 (7个字符串) ----------
+            function collectDays() {
+                return textareaElements.map(textarea => textarea.value);
+            }
+
+            // ---------- 调用后端API生成周报 ----------
+            async function generateReport() {
+                const days = collectDays();
+                // 快速检查是否全部为空
+                if (days.every(day => !day.trim())) {
+                    showToast('请至少填写一天的内容', 1500);
+                    return;
+                }
+
+                // 禁用按钮，修改状态
+                generateBtn.disabled = true;
+                const originalText = generateBtn.innerHTML;
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 生成中...';
+                previewArea.value = 'AI正在思考中，请稍候……';
+
+                try {
+                    const response = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ days })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || `请求失败 (${response.status})`);
+                    }
+
+                    previewArea.value = data.result || '生成内容为空';
+                } catch (error) {
+                    console.error('生成出错:', error);
+                    previewArea.value = `❌ 生成失败: ${error.message}`;
+                    showToast('生成失败，请重试', 2000);
+                } finally {
+                    // 恢复按钮
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = originalText;
+                }
+            }
+
+            // ---------- 复制到剪贴板 ----------
+            async function copyReport() {
+                const content = previewArea.value;
+                if (!content.trim() || content === 'AI正在思考中，请稍候……') {
+                    showToast('没有可复制的内容', 1500);
+                    return;
+                }
+                try {
+                    await navigator.clipboard.writeText(content);
+                    showToast('✅ 复制成功！');
+                } catch (err) {
+                    console.error('复制失败:', err);
+                    alert('复制失败，请手动复制');
+                }
+            }
+
+            // ---------- 事件绑定 ----------
+            generateBtn.addEventListener('click', generateReport);
+            copyBtn.addEventListener('click', copyReport);
+            clearBtn.addEventListener('click', function() {
+                clearAll();
+                showToast('已清空', 1000);
+            });
+
+            // 可选: 加载完成后自动聚焦第一条（非必须）
+            // textareaElements[0]?.focus();
+        })();
+    </script>
+</body>
+</html>
